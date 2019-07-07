@@ -18,7 +18,8 @@ def data_construction():
     # load the sets
     i = [0, 1, 2, 3, 4, 5, 6, 7]
     k = [1]
-    t = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+    t = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+        17, 18, 19, 20]
 
     set_input = _auxi.SetInput(i, k, t)
 
@@ -61,11 +62,11 @@ def main():
     _constraint.constraint_definition(Shangfei_model)
 
     # set up the model
-    opt = SolverFactory('CBC.exe')
+    opt = SolverFactory('cplex')
     #opt.options['mipgap'] = 0.001
     #opt.options['threads'] = 0
 
-    results = opt.solve(Shangfei_model, tee = True,
+    Shangfei_results = opt.solve(Shangfei_model, tee = True,
     symbolic_solver_labels = True)
 
     Shangfei_model.solutions.store_to(Shangfei_results)

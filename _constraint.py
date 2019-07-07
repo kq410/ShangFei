@@ -43,7 +43,7 @@ def constraint_definition(model):
         # return summation <= model.B[k]
 
         return sum(model.Bi[i, k] * model.x[i, tao] for i in model.i
-        for tao in model.t if tao >= t - model.p[i] and tao <= t) \
+        for tao in model.t if tao >= t - model.p[i] + 1 and tao <= t) \
         <= model.B[k]
 
 
