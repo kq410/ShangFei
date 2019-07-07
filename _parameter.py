@@ -17,6 +17,7 @@ def parameter_initialisation(model, par_input):
 
     model.Bi = pyo.Param(
                          model.i, model.k, initialize = par_input.Bi,
+                         default = 0,
                          doc = 'resouce requirements of each task'
     )
 
