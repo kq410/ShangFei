@@ -20,7 +20,6 @@ class SolutionPrinter(cp_model.CpSolverSolutionCallback):
         cp_model.CpSolverSolutionCallback.__init__(self)
         self.__solution_count = 0
         self.__variables = variables
-        self.__solution_limit = limit
         self.__start_time = time.time()
 
     def on_solution_callback(self):
@@ -31,12 +30,6 @@ class SolutionPrinter(cp_model.CpSolverSolutionCallback):
               (self.__solution_count, current_time - self.__start_time,
                objective))
         print()
-        if self.__solution_count >= self.__solution_limit:
-            print('Stop search after %i solutions' % self.__solution_limit)
-            self.StopSearch()
-
-    def solution_count(self):
-        return self.__solution_count
 
 
 class VarArrayAndObjectiveSolutionPrinter(cp_model.CpSolverSolutionCallback):
@@ -180,7 +173,7 @@ def main():
 
     #interval_var = {}
 
-    horizon = 200
+    horizon = 250
 
     # task_starts: Variable for the start time of the task.
     # duration: Length of the time interval for the task.
@@ -189,6 +182,7 @@ def main():
     print('Genrating the interval and the makespan variables......')
 
     for task in data['task_list']:
+        #print(task.index, task.successor)
         suffix = '_t%i' % (task.index)
         task_starts[task.index] = model.NewIntVar(
         0, horizon, 'start of task' + suffix
@@ -218,14 +212,15 @@ def main():
         if task.successor != [] and task.successor != None:
             for suc in task.successor:
                 model.Add(task_ends[task.index] <= task_starts[suc])
-                model.Add(task_ends[task.index] <= makespan)
+                #model.Add(task_ends[task.index] <= makespan)
 
-        elif task.successor == [] and task.index == data['task_list'][-1].index:
-            #print('==============================true')
+        elif task.successor == []:
             model.Add(task_ends[task.index] <= makespan)
+        #     #print('==============================true')
+        #     model.Add(task_ends[task.index] <= makespan)
             #model.Add(task_ends[task.index] <= task_starts[suc])
-        else:
-            model.Add(task_ends[task.index] <= makespan)
+        # else:
+        #     model.Add(task_ends[task.index] <= makespan)
 
     # add resource constraints
     print('Adding resource constraints......')
@@ -245,41 +240,57 @@ def main():
     # solve the model
     print('Solving using CpSolver......')
     solver = cp_model.CpSolver()
-    time_limit = 2000
+    time_limit = 500
     solver.parameters.max_time_in_seconds = time_limit
     status = solver.Solve(model)
 
 
     # if solution is feasible or optimal after 50s then print it
-    if status == cp_model.FEASIBLE or status == cp_model.OPTIMAL:
+
+    # if status == cp_model.FEASIBLE or status == cp_model.OPTIMAL:
+
         # out put as dataframe structure
-        df_list = []
-        for each_task in data['task_list']:
-            start_time = solver.Value(task_starts[each_task.index])
-            finish_time = solver.Value(task_ends[each_task.index])
-            size = each_task.duration
+    df_list = []
+    for each_task in data['task_list']:
+        start_time = solver.Value(task_starts[each_task.index])
+        finish_time = solver.Value(task_ends[each_task.index])
+        size = each_task.duration
 
 
-            int_med_list = [start_time, finish_time, size]
-            int_med_list.extend(each_task.resource)
+        int_med_list = [start_time, finish_time, size]
+        int_med_list.extend(each_task.resource)
 
 
-            df_list.append(int_med_list)
+        df_list.append(int_med_list)
 
-            results_df = pd.DataFrame(df_list)
-            results_df.columns = ['start_time', 'finish time', 'size',
-            'res0', 'res1', 'res2', 'res3', 'res4', 'res5', 'res6', 'res7',
-            'res8', 'res9', 'res10', 'res11', 'res12', 'res13', 'res14',
-            'res15', 'res16', 'res17', 'res18', 'res19'
-            ]
+        results_df = pd.DataFrame(df_list)
+        results_df.columns = ['start_time', 'finish time', 'size',
+        'res0', 'res1', 'res2', 'res3', 'res4', 'res5', 'res6', 'res7',
+        'res8', 'res9', 'res10', 'res11', 'res12', 'res13', 'res14',
+        'res15', 'res16', 'res17', 'res18', 'res19'
+        ]
 
+    data_frame_to_excel(results_df,
+    'C:\\Users\\kq410\\github\\ShangFei/test_results_new60.xlsx'
+    )
+    # else:
+    #     print('Model still not feasible after %is'%(time_limit))
 
-    else:
-        print('Model still not feasible after %is'%(time_limit))
+    # test sequence constraints
+    results_test = []
+    for task in data['task_list']:
+         if task.successor != [] and task.successor != None:
+             for suc in task.successor:
+                 if solver.Value(task_ends[task.index]) <= \
+                 solver.Value(task_starts[suc]):
+                     results_test.append(1)
+                 else:
+                     results_test.append(0)
 
+    print('test:', results_test)
 
-    solution_printer = VarArrayAndObjectiveSolutionPrinter(
-    [makespan, task_starts, task_ends], 1
+    solution_printer = SolutionPrinter(
+    [makespan, task_starts, task_ends]
     )
 
     solver.SolveWithSolutionCallback(model, solution_printer)
@@ -288,10 +299,6 @@ def main():
 
     print('Number of solutions found: %i' % solution_printer.solution_count())
 
-    #print(results_df)
-    data_frame_to_excel(results_df,
-    'C:\\Users\\kq410\\github\\ShangFei/test_results_new.xlsx'
-    )
 
 
 if __name__ == '__main__':
