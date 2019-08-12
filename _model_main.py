@@ -15,23 +15,23 @@ def data_construction():
     """
     This function constructs the input data object
     """
+    print('Reading excel......')
+    excel_file = 'precedence.xlsx'
     # load the sets
-    i = [0, 1, 2, 3, 4, 5, 6, 7]
-    k = [1]
-    t = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-        17, 18, 19, 20]
+    #i = [0, 1, 2, 3, 4, 5, 6, 7]
+    print('Initialising set......')
+    i = _auxi.read_precedence(excel_file)[0]
+    k = _auxi.get_resouce_set(excel_file)
+    t = [time_int for time_int in range(250)]
 
     set_input = _auxi.SetInput(i, k, t)
-
+    print('Initialising paramters......')
     # load the parameters for the production of olefins
-    p = {0 : 0, 1 : 3, 2 : 4, 3 : 2, 4 : 2, 5 : 1, 6 : 4, 7 : 0}
-    B = {1 : 4}
-    Bi = {(0, 1) : 0, (1, 1) : 2, (2, 1) : 3, (3, 1) : 4,
-    (4, 1) : 4, (5, 1) : 3, (6, 1) : 2, (7, 1) : 0}
+    p = _auxi.read_process_time(excel_file)
+    B = {'机械' : 38,  '结构' : 28, '特设' : 33}
+    Bi = _auxi.get_resource_consumption(excel_file)
 
-    precedence = {(1, 0) : 1, (2, 0) : 1, (3, 1) : 1, (4, 2) : 1,
-    (5, 3) : 1, (6, 4) : 1, (7, 5) : 1, (7, 6) : 1}
-
+    precedence = _auxi.convert_precedence(excel_file)
     par_input = _auxi.ParaInput(p, B, Bi, precedence)
 
     return set_input, par_input
